@@ -1,5 +1,11 @@
 [
     {"Name":"Hacker News", "Url": "https://news.ycombinator.com/rss"},
     {"Name":"InDepth", "Url": "https://indepthmag.com/feed/"},
-    {"Name":"BleepingComp", "Url": "https://www.bleepingcomputer.com/feed/"}
+    {"Name":"BleepingComp", "Url": "https://www.bleepingcomputer.com/feed/"},
+    {"Name":"HPCwire", "Url": "https://www.hpcwire.com/feed/"},
+    {"Name":"Phoronix", "Url":"https://www.phoronix.com/rss.php"},
+    {"Name":"ServeTheHome", "Url":"https://www.servethehome.com/feed"},
+    {"Name":"Tailscale", "Url":"https://tailscale.com/blog/index.xml"},
+    {"Name":"Tor", "Url":"https://blog.torproject.org/feed"},
+    {"Name":"ToB", "Url":"https://blog.trailofbits.com/index.xml"}
 ]
