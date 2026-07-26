@@ -1,0 +1,5 @@
+[
+    {"Name":"Hacker News", "Url": "https://news.ycombinator.com/rss"},
+    {"Name":"InDepth", "Url": "https://indepthmag.com/feed/"},
+    {"Name":"BleepingComp", "Url": "https://www.bleepingcomputer.com/feed/"}
+]
