@@ -5,26 +5,41 @@ import (
 	"os"
 )
 
-var quiet bool
+type level uint8
 
-func SetQuiet(q bool) { quiet = q }
+const (
+	DEBUG = level(iota)
+	INFO
+	WARN
+	ERROR
+	CRITICAL
+)
 
-func Logf(format string, a ...any) {
-	if !quiet {
-		fmt.Printf(format+"\n", a...)
+var (
+	minLevel = INFO
+)
+
+func SetQuiet(q bool)   { minLevel = ERROR }
+func SetVerbose(v bool) { minLevel = DEBUG }
+
+func Logf(lv level, format string, a ...any) {
+	if lv >= minLevel {
+		fmt.Printf(format, a...)
 	}
 }
 
-func Println(a ...any) {
-	if !quiet {
+func Println(lv level, a ...any) {
+	if lv >= minLevel {
 		fmt.Println(a...)
 	}
 }
 
 func Fatalln(a ...any) {
-	if !quiet {
-		fmt.Println(a...)
-	}
+	fmt.Println(a...)
+	os.Exit(1)
+}
 
+func Fatalf(format string, a ...any) {
+	fmt.Printf(format, a...)
 	os.Exit(1)
 }
