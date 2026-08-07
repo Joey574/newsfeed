@@ -45,7 +45,7 @@ func (r *Runner) removeStale(dir string) {
 			// casche is expired
 			path := dir + "/" + entry.Name()
 			if err = os.Remove(path); err != nil {
-				log.Logf(log.DEBUG, "failed to remove stale cache '%s'\n", path)
+				log.Logf(log.DEBUG, "failed to remove stale cache '%s': %v\n", path, err)
 			} else {
 				log.Logf(log.DEBUG, "removing stale cache '%s'\n", path)
 			}
@@ -59,11 +59,19 @@ func (r *Runner) Run(feeds []rss.Feed, isOneShot bool) (map[string][]rss.Article
 	var mx sync.Mutex
 	var wg sync.WaitGroup
 
-	for i := range feeds {
+	if tmpCacheDir != "" {
+		r.removeStale(tmpCacheDir)
+	}
+
+	if cacheDir != "" {
+		r.removeStale(cacheDir)
+	}
+
+	for idx := range feeds {
 		wg.Add(1)
 		go func(i int) {
 			defer wg.Done()
-			log.Logf(log.DEBUG, "[%d] fetching articles from '%s'\n", i, feeds[i].Url)
+			log.Logf(log.DEBUG, "fetching articles from '%s'\n", feeds[i].Url)
 
 			var err error
 			var localArticles []rss.Article
@@ -71,33 +79,31 @@ func (r *Runner) Run(feeds []rss.Feed, isOneShot bool) (map[string][]rss.Article
 
 			// first check tmp dir for ephemeral caching
 			if tmpCacheDir != "" {
-				r.removeStale(tmpCacheDir)
 				localArticles, err = feeds[i].LoadFromDir(tmpCacheDir)
 				if err != nil {
-					log.Logf(log.DEBUG, "[%d] %v\n", i, err)
+					log.Logf(log.DEBUG, "%v\n", err)
 					cacheMiss = true
 				} else {
-					log.Logf(log.DEBUG, "[%d] loaded cache from '%s'\n", i, tmpCacheDir)
+					log.Logf(log.DEBUG, "loaded '%s' from cache\n", feeds[i].Name)
 					cacheMiss = false
 				}
 			}
 
 			// if we've identified a cache dir check that
 			if cacheDir != "" && cacheMiss {
-				r.removeStale(cacheDir)
 				localArticles, err = feeds[i].LoadFromDir(cacheDir)
 				if err != nil {
-					log.Logf(log.DEBUG, "[%d] %v\n", i, err)
+					log.Logf(log.DEBUG, "%v\n", err)
 					cacheMiss = true
 				} else {
-					log.Logf(log.DEBUG, "[%d] loaded cache from '%s'\n", i, cacheDir)
+					log.Logf(log.DEBUG, "loaded '%s' from cache\n", feeds[i].Name)
 					cacheMiss = false
 				}
 			}
 
 			// failed to load from cache, have to get live feed
 			if cacheMiss {
-				log.Logf(log.DEBUG, "[%d] no valid caches found, fetching live feed\n", i)
+				log.Logf(log.DEBUG, "'%s' missed cache, fetching live feed\n", feeds[i].Name)
 
 				localArticles, err = feeds[i].Fetch()
 				if err != nil {
@@ -113,7 +119,7 @@ func (r *Runner) Run(feeds []rss.Feed, isOneShot bool) (map[string][]rss.Article
 				if dir != "" {
 					err = r.saveToDir(feeds[i], localArticles, dir)
 					if err != nil {
-						log.Logf(log.ERROR, "[%d] %v\n", i, err)
+						log.Logf(log.ERROR, "%v\n", err)
 					}
 				}
 			}
@@ -121,7 +127,7 @@ func (r *Runner) Run(feeds []rss.Feed, isOneShot bool) (map[string][]rss.Article
 			mx.Lock()
 			articles[feeds[i].Name] = localArticles
 			mx.Unlock()
-		}(i)
+		}(idx)
 	}
 	wg.Wait()
 

@@ -19,8 +19,16 @@ var (
 	minLevel = INFO
 )
 
-func SetQuiet(q bool)   { minLevel = ERROR }
-func SetVerbose(v bool) { minLevel = DEBUG }
+func SetQuiet(q bool) {
+	if q {
+		minLevel = ERROR
+	}
+}
+func SetVerbose(v bool) {
+	if v {
+		minLevel = DEBUG
+	}
+}
 
 func Logf(lv level, format string, a ...any) {
 	if lv >= minLevel {

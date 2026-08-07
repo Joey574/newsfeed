@@ -2,11 +2,17 @@ package main
 
 import (
 	"fmt"
+	"maps"
+	"net/url"
+	"newsfeed/v2/internal/browser"
 	"newsfeed/v2/internal/cli"
+	"newsfeed/v2/internal/dmenu"
 	"newsfeed/v2/internal/log"
 	"newsfeed/v2/internal/rss"
 	"newsfeed/v2/internal/runner"
 	"os"
+	"slices"
+	"strings"
 )
 
 const (
@@ -54,10 +60,23 @@ func main() {
 
 	var feeds []rss.Feed
 	for i := range urls {
-		feeds = append(feeds, rss.Feed{
-			Name: "",
-			Url:  urls[i],
-		})
+		parts := strings.SplitN(urls[i], "=", 2)
+		if len(parts) != 2 {
+			u, err := url.Parse(urls[i])
+			if err != nil {
+				log.Fatalln(err)
+			}
+
+			feeds = append(feeds, rss.Feed{
+				Name: u.Hostname(),
+				Url:  urls[i],
+			})
+		} else {
+			feeds = append(feeds, rss.Feed{
+				Name: parts[0],
+				Url:  parts[1],
+			})
+		}
 	}
 
 	r := runner.NewRunner()
@@ -67,14 +86,44 @@ func main() {
 	}
 
 	if args.Disaplay {
+		var out strings.Builder
+
 		for k, v := range articles {
+			size := len(v) * min(args.TitleLength, 256) // limit to 256 cap for prealloc
+			if args.WriteNames {
+				size += (len(k) + 2) * len(v)
+			}
+			out.Grow(size)
+
 			for _, a := range v {
 				if args.WriteNames {
-					fmt.Printf("%s: %s\n", k, a.Title)
+					fmt.Fprintf(&out, "%s: %s\n", k, a.Title)
 				} else {
-					fmt.Println(a.Title)
+					fmt.Fprintln(&out, a.Title)
 				}
 			}
+		}
+
+		fmt.Print(strings.TrimSpace(out.String()))
+	}
+
+	if args.UseDmenu {
+		tmp := slices.Collect(maps.Values(articles))
+		a := make([]rss.Article, len(tmp[0])*len(tmp))
+		for _, t := range tmp {
+			a = append(a, t...)
+		}
+
+		dconf := dmenu.NewConfig("")
+		url, err := dmenu.OpenMenu(a, dconf)
+		if err != nil {
+			log.Fatalln(err)
+		}
+
+		bconf := browser.NewConfig("")
+		err = browser.StartBrowser(url, bconf)
+		if err != nil {
+			log.Fatalln(err)
 		}
 	}
 }

@@ -3,8 +3,11 @@ package dmenu
 import (
 	"bytes"
 	"encoding/json"
+	"newsfeed/v2/internal/log"
+	"newsfeed/v2/internal/rss"
 	"os"
 	"os/exec"
+	"slices"
 	"strings"
 )
 
@@ -33,16 +36,24 @@ func NewConfig(path string) *Config {
 		Lines:              "20",
 	}
 
-	bytes, err := os.ReadFile(path)
-	if err != nil {
+	if path == "" {
 		return c
 	}
 
-	_ = json.Unmarshal(bytes, c)
+	bytes, err := os.ReadFile(path)
+	if err != nil {
+		log.Fatalln(err)
+	}
+
+	err = json.Unmarshal(bytes, c)
+	if err != nil {
+		log.Fatalln(err)
+	}
 	return c
 }
 
-func OpenMenu(options []string, c *Config) (string, error) {
+// Returns the url of the selected article
+func OpenMenu(articles []rss.Article, c *Config) (string, error) {
 	cmd := exec.Command(
 		"dmenu",
 		"-i",
@@ -54,6 +65,14 @@ func OpenMenu(options []string, c *Config) (string, error) {
 		"-sf", c.SelectedForeground,
 		"-l", c.Lines,
 	)
+	if cmd == nil {
+		log.Fatalln("command is nil")
+	}
+
+	options := make([]string, 0, len(articles))
+	for _, v := range articles {
+		options = append(options, v.Title)
+	}
 
 	input := strings.Join(options, "\n")
 	cmd.Stdin = strings.NewReader(input)
@@ -68,5 +87,10 @@ func OpenMenu(options []string, c *Config) (string, error) {
 
 	// get output and remove trailing newline
 	choice := out.String()
-	return choice[:len(choice)-1], nil
+	idx := slices.Index(options, choice)
+	if idx == -1 {
+		panic("this is really bad")
+	}
+
+	return articles[idx].Url, nil
 }
