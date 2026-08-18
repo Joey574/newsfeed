@@ -88,18 +88,18 @@ func main() {
 	if args.Disaplay {
 		var out strings.Builder
 
-		for k, v := range articles {
-			size := len(v) * min(args.TitleLength, 256) // limit to 256 cap for prealloc
+		for k, feed := range articles {
+			size := len(feed) * min(args.TitleLength, 256) // limit to 256 cap for prealloc
 			if args.WriteNames {
-				size += (len(k) + 2) * len(v)
+				size += (len(k) + 2) * len(feed)
 			}
 			out.Grow(size)
 
-			for _, a := range v {
+			for i := range min(len(feed), args.PerFeed) {
 				if args.WriteNames {
-					fmt.Fprintf(&out, "%s: %s\n", k, a.Title)
+					fmt.Fprintf(&out, "%s: %s\n", k, feed[i].Title)
 				} else {
-					fmt.Fprintln(&out, a.Title)
+					fmt.Fprintln(&out, feed[i].Title)
 				}
 			}
 		}
@@ -110,8 +110,9 @@ func main() {
 	if args.UseDmenu {
 		tmp := slices.Collect(maps.Values(articles))
 		a := make([]rss.Article, len(tmp[0])*len(tmp))
-		for _, t := range tmp {
-			a = append(a, t...)
+
+		for _, feed := range tmp {
+			a = append(a, feed...)
 		}
 
 		dconf := dmenu.NewConfig("")
