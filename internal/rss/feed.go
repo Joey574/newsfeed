@@ -61,6 +61,7 @@ func (f *Feed) Fetch() ([]Article, error) {
 	var err error
 	var gf *gofeed.Feed
 	for _, ua := range UserAgents {
+		log.Logf(log.DEBUG, "fetching '%s' with User Agent: %s\n", f.Url, ua)
 		fp.UserAgent = ua
 		gf, err = fp.ParseURL(f.Url)
 		if err == nil {
@@ -75,7 +76,7 @@ func (f *Feed) Fetch() ([]Article, error) {
 			return articles, nil
 		}
 
-		log.Logf(log.WARN, "feed error: %v\n", err)
+		log.Logf(log.DEBUG, "feed error: %v\n", err)
 		time.Sleep(time.Second)
 	}
 
