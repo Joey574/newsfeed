@@ -13,6 +13,8 @@ import (
 	"os"
 	"slices"
 	"strings"
+
+	"github.com/jessevdk/go-flags"
 )
 
 const (
@@ -52,6 +54,9 @@ func main() {
 
 	urls, err := args.Parse()
 	if err != nil {
+		if flags.WroteHelp(err) {
+			os.Exit(0)
+		}
 		log.Fatalln(err)
 	}
 

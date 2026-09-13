@@ -5,6 +5,7 @@ import (
 	"encoding/base32"
 	"encoding/json"
 	"fmt"
+	"newsfeed/v2/internal/log"
 	"os"
 	"path/filepath"
 	"strings"
@@ -73,6 +74,9 @@ func (f *Feed) Fetch() ([]Article, error) {
 
 			return articles, nil
 		}
+
+		log.Logf(log.WARN, "feed error: %v\n", err)
+		time.Sleep(time.Second)
 	}
 
 	return nil, err

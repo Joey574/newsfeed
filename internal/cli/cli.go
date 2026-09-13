@@ -23,8 +23,8 @@ func NewArgs() *Args {
 
 func (a *Args) Parse() ([]string, error) {
 	pos, err := flags.Parse(a)
-	if flags.WroteHelp(err) {
-		return nil, nil
+	if err != nil {
+		return nil, err
 	}
 
 	if a.PerFeed == -1 {
